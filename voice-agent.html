@@ -1,0 +1,433 @@
+  ---
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>HomeServe Pro - AI Voice Assistant</title>
+      <style>
+          * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+          }
+
+          body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI',
+  Roboto, Oxygen, Ubuntu, sans-serif;
+              background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+              min-height: 100vh;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              padding: 20px;
+          }
+
+          .container {
+              background: rgba(255, 255, 255, 0.95);
+              border-radius: 24px;
+              padding: 40px;
+              max-width: 500px;
+              width: 100%;
+              box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+          }
+
+          .header {
+              text-align: center;
+              margin-bottom: 30px;
+          }
+
+          .logo {
+              font-size: 48px;
+              margin-bottom: 10px;
+          }
+
+          h1 {
+              color: #1a1a2e;
+              font-size: 24px;
+              font-weight: 700;
+          }
+
+          .subtitle {
+              color: #666;
+              font-size: 14px;
+              margin-top: 5px;
+          }
+
+          .mic-container {
+              display: flex;
+              justify-content: center;
+              margin: 40px 0;
+          }
+
+          .mic-button {
+              width: 120px;
+              height: 120px;
+              border-radius: 50%;
+              border: none;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              font-size: 48px;
+              cursor: pointer;
+              transition: all 0.3s ease;
+              box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+              display: flex;
+              justify-content: center;
+              align-items: center;
+          }
+
+          .mic-button:hover {
+              transform: scale(1.05);
+              box-shadow: 0 15px 40px rgba(102, 126, 234, 0.5);
+          }
+
+          .mic-button:active {
+              transform: scale(0.95);
+          }
+
+          .mic-button.recording {
+              background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+              animation: pulse 1.5s infinite;
+          }
+
+          .mic-button.processing {
+              background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+              animation: spin 1s linear infinite;
+          }
+
+          .mic-button:disabled {
+              opacity: 0.7;
+              cursor: not-allowed;
+          }
+
+          @keyframes pulse {
+              0%, 100% { box-shadow: 0 0 0 0 rgba(245, 87, 108, 0.4); }
+              50% { box-shadow: 0 0 0 20px rgba(245, 87, 108, 0); }
+          }
+
+          @keyframes spin {
+              from { transform: rotate(0deg); }
+              to { transform: rotate(360deg); }
+          }
+
+          .status {
+              text-align: center;
+              font-size: 16px;
+              color: #666;
+              margin-bottom: 20px;
+              min-height: 24px;
+          }
+
+          .status.recording {
+              color: #f5576c;
+              font-weight: 600;
+          }
+
+          .status.processing {
+              color: #4facfe;
+          }
+
+          .conversation {
+              background: #f8f9fa;
+              border-radius: 16px;
+              padding: 20px;
+              max-height: 300px;
+              overflow-y: auto;
+              margin-top: 20px;
+          }
+
+          .message {
+              padding: 12px 16px;
+              border-radius: 12px;
+              margin-bottom: 10px;
+              font-size: 14px;
+              line-height: 1.5;
+          }
+
+          .message.user {
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              margin-left: 40px;
+          }
+
+          .message.assistant {
+              background: white;
+              color: #333;
+              margin-right: 40px;
+              box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+          }
+
+          .message .label {
+              font-size: 11px;
+              font-weight: 600;
+              text-transform: uppercase;
+              opacity: 0.7;
+              margin-bottom: 4px;
+          }
+
+          .instructions {
+              text-align: center;
+              color: #999;
+              font-size: 12px;
+              margin-top: 20px;
+          }
+
+          .error {
+              background: #fff5f5;
+              color: #c53030;
+              padding: 12px;
+              border-radius: 8px;
+              text-align: center;
+              margin-top: 10px;
+              font-size: 14px;
+          }
+
+          .new-chat {
+              display: block;
+              width: 100%;
+              padding: 12px;
+              margin-top: 20px;
+              background: transparent;
+              border: 2px solid #667eea;
+              color: #667eea;
+              border-radius: 12px;
+              font-size: 14px;
+              font-weight: 600;
+              cursor: pointer;
+              transition: all 0.3s ease;
+          }
+
+          .new-chat:hover {
+              background: #667eea;
+              color: white;
+          }
+      </style>
+  </head>
+  <body>
+      <div class="container">
+          <div class="header">
+              <div class="logo">🏠</div>
+              <h1>HomeServe Pro</h1>
+              <p class="subtitle">AI Voice Assistant</p>
+          </div>
+
+          <p class="status" id="status">Click the microphone and speak</p>
+
+          <div class="mic-container">
+              <button class="mic-button" id="micButton"
+  onclick="toggleRecording()">
+                  🎤
+              </button>
+          </div>
+
+          <div class="conversation" id="conversation">
+              <div class="message assistant">
+                  <div class="label">Assistant</div>
+                  Hi! Thank you for contacting HomeServe Pro. How can I help
+   you today?
+              </div>
+          </div>
+
+          <button class="new-chat" onclick="startNewChat()">Start New
+  Conversation</button>
+
+          <p class="instructions">
+              Hold the button or click to start/stop recording.<br>
+              Speak clearly into your microphone.
+          </p>
+      </div>
+
+      <script>
+          // Configuration
+          const WEBHOOK_URL =
+  'https://n8n.srv1282327.hstgr.cloud/webhook/browser-voice-agent';
+
+          // State
+          let mediaRecorder = null;
+          let audioChunks = [];
+          let isRecording = false;
+          let sessionId = 'session-' + Date.now() + '-' +
+  Math.random().toString(36).substr(2, 9);
+
+          // DOM Elements
+          const micButton = document.getElementById('micButton');
+          const status = document.getElementById('status');
+          const conversation = document.getElementById('conversation');
+
+          // Check for browser support
+          if (!navigator.mediaDevices ||
+  !navigator.mediaDevices.getUserMedia) {
+              showError('Your browser does not support audio recording.
+  Please use Chrome, Firefox, or Edge.');
+          }
+
+          async function toggleRecording() {
+              if (isRecording) {
+                  stopRecording();
+              } else {
+                  await startRecording();
+              }
+          }
+
+          async function startRecording() {
+              try {
+                  const stream = await navigator.mediaDevices.getUserMedia({
+   audio: true });
+
+                  mediaRecorder = new MediaRecorder(stream, { mimeType:
+  'audio/webm' });
+                  audioChunks = [];
+
+                  mediaRecorder.ondataavailable = (event) => {
+                      audioChunks.push(event.data);
+                  };
+
+                  mediaRecorder.onstop = async () => {
+                      const audioBlob = new Blob(audioChunks, { type:
+  'audio/webm' });
+                      await sendAudioToAgent(audioBlob);
+
+                      // Stop all tracks
+                      stream.getTracks().forEach(track => track.stop());
+                  };
+
+                  mediaRecorder.start();
+                  isRecording = true;
+
+                  micButton.classList.add('recording');
+                  micButton.innerHTML = '⏹️';
+                  status.textContent = 'Recording... Click to stop';
+                  status.classList.add('recording');
+
+              } catch (error) {
+                  console.error('Error accessing microphone:', error);
+                  showError('Could not access microphone. Please allow
+  microphone permissions.');
+              }
+          }
+
+          function stopRecording() {
+              if (mediaRecorder && isRecording) {
+                  mediaRecorder.stop();
+                  isRecording = false;
+
+                  micButton.classList.remove('recording');
+                  micButton.classList.add('processing');
+                  micButton.innerHTML = '⏳';
+                  micButton.disabled = true;
+                  status.textContent = 'Processing your message...';
+                  status.classList.remove('recording');
+                  status.classList.add('processing');
+              }
+          }
+
+          async function sendAudioToAgent(audioBlob) {
+              try {
+                  // Convert blob to base64
+                  const base64Audio = await blobToBase64(audioBlob);
+
+                  // Send to n8n webhook
+                  const response = await fetch(WEBHOOK_URL, {
+                      method: 'POST',
+                      headers: {
+                          'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                          audio: base64Audio.split(',')[1], // Remove
+  data:audio/webm;base64, prefix
+                          sessionId: sessionId,
+                          isNewConversation: false
+                      })
+                  });
+
+                  if (!response.ok) {
+                      throw new Error('Server error: ' + response.status);
+                  }
+
+                  const data = await response.json();
+
+                  // Add user message (we don't have transcription in
+  response, so we'll show generic)
+                  if (data.text) {
+                      // Add assistant response to conversation
+                      addMessage('assistant', data.text);
+                  }
+
+                  // Play audio response
+                  if (data.audio) {
+                      await playAudio(data.audio);
+                  }
+
+              } catch (error) {
+                  console.error('Error sending audio:', error);
+                  showError('Failed to process your message. Please try
+  again.');
+              } finally {
+                  resetMicButton();
+              }
+          }
+
+          function blobToBase64(blob) {
+              return new Promise((resolve, reject) => {
+                  const reader = new FileReader();
+                  reader.onloadend = () => resolve(reader.result);
+                  reader.onerror = reject;
+                  reader.readAsDataURL(blob);
+              });
+          }
+
+          async function playAudio(base64Audio) {
+              return new Promise((resolve, reject) => {
+                  const audio = new Audio('data:audio/mp3;base64,' +
+  base64Audio);
+                  audio.onended = resolve;
+                  audio.onerror = reject;
+                  audio.play().catch(reject);
+              });
+          }
+
+          function addMessage(role, text) {
+              const messageDiv = document.createElement('div');
+              messageDiv.className = `message ${role}`;
+              messageDiv.innerHTML = `
+                  <div class="label">${role === 'user' ? 'You' :
+  'Assistant'}</div>
+                  ${text}
+              `;
+              conversation.appendChild(messageDiv);
+              conversation.scrollTop = conversation.scrollHeight;
+          }
+
+          function showError(message) {
+              const errorDiv = document.createElement('div');
+              errorDiv.className = 'error';
+              errorDiv.textContent = message;
+              conversation.appendChild(errorDiv);
+              conversation.scrollTop = conversation.scrollHeight;
+
+              // Remove error after 5 seconds
+              setTimeout(() => errorDiv.remove(), 5000);
+          }
+
+          function resetMicButton() {
+              micButton.classList.remove('recording', 'processing');
+              micButton.innerHTML = '🎤';
+              micButton.disabled = false;
+              status.textContent = 'Click the microphone and speak';
+              status.classList.remove('recording', 'processing');
+          }
+
+          function startNewChat() {
+              sessionId = 'session-' + Date.now() + '-' +
+  Math.random().toString(36).substr(2, 9);
+              conversation.innerHTML = `
+                  <div class="message assistant">
+                      <div class="label">Assistant</div>
+                      Hi! Thank you for contacting HomeServe Pro. How can I
+  help you today?
+                  </div>
+              `;
+          }
+      </script>
+  </body>
+  </html>
